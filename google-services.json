@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "424684087927",
+    "firebase_url": "https://pruebalogin-2b279.firebaseio.com",
+    "project_id": "pruebalogin-2b279",
+    "storage_bucket": "pruebalogin-2b279.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:424684087927:android:8271946ec93775743fb472",
+        "android_client_info": {
+          "package_name": "es.alejandrogarrido.homing"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "424684087927-igin8t32ep25iorngdk6epdm3f63jo52.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "es.alejandrogarrido.homing",
+            "certificate_hash": "4710958350d3882e08d7cc21b7ea1837cd2d2c9f"
+          }
+        },
+        {
+          "client_id": "424684087927-f9h40t9kjtnk5m4ch3e3tq4ejqin0cfj.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBaGZrGAoRsvyS9zI1nw-nvDRfLwRYxFN8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "424684087927-f9h40t9kjtnk5m4ch3e3tq4ejqin0cfj.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

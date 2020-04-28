@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/navigation_home"
+        android:icon="@drawable/casa"
+        android:title="Inicio"/>
+
+    <item
+        android:id="@+id/navigation_search"
+        android:icon="@drawable/buscar"
+        android:title="Buscar"/>
+
+    <item
+        android:id="@+id/navigation_add"
+        android:icon="@drawable/anadir"
+        android:title="Añadir"/>
+
+    <item
+        android:id="@+id/navigation_message"
+        android:icon="@drawable/comentario"
+        android:title="Chat"/>
+
+    <item
+        android:id="@+id/navigation_user"
+        android:icon="@drawable/cuenta"
+        android:title="Cuenta"/>
+
+</menu>
