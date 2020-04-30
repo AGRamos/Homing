@@ -6,24 +6,29 @@ import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.util.Log;
+import android.text.format.DateFormat;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.Fragment;
+
+import com.firebase.ui.database.FirebaseListAdapter;
+import com.firebase.ui.database.FirebaseListOptions;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-import com.google.firebase.FirebaseApp;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
@@ -39,19 +44,22 @@ import es.alejandrogarrido.homing.ui.usuarios.Geo;
 import es.alejandrogarrido.homing.ui.usuarios.Rating;
 import es.alejandrogarrido.homing.ui.usuarios.Usuarios;
 
-public class MainActivity extends AppCompatActivity implements OnAveriaInteractionListener {
+public class MainActivity extends AppCompatActivity implements OnAveriaInteractionListener, View.OnClickListener, BottomNavigationView.OnNavigationItemSelectedListener {
 
     private FirebaseAuth mFirebaseAuth;
     private FirebaseUser mFirebaseUser;
     private FirebaseDatabase db;
-    protected SharedPreferences prefs;
-    protected ArrayList<Usuarios> usuariosArrayList;
+    private SharedPreferences prefs;
+    private ArrayList<Usuarios> usuariosArrayList;
+    private CargarUsuarios carga;
+    private FirebaseListAdapter<MensajesChat> adapter;
 
     private BottomNavigationView nav;
-    Intent i;
+    private Intent i;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        carga = new CargarUsuarios(this);
         i = getIntent();
         mFirebaseAuth = FirebaseAuth.getInstance();
         mFirebaseUser = mFirebaseAuth.getCurrentUser();
@@ -63,36 +71,56 @@ public class MainActivity extends AppCompatActivity implements OnAveriaInteracti
         } else {
                 super.onCreate(savedInstanceState);
                 setContentView(R.layout.activity_main);
-                leerUsuarios();
+                carga.leerUsuarios();
                 nav = findViewById(R.id.navigationView);
                 nav.inflateMenu(R.menu.manu);
-                nav.setOnNavigationItemSelectedListener(new BottomNavigationView.OnNavigationItemSelectedListener() {
-                    @Override
-                    public boolean onNavigationItemSelected(@NonNull MenuItem menuItem) {
-                        switch (menuItem.getItemId()) {
-                            case R.id.navigation_home:
-                                getSupportFragmentManager().beginTransaction().replace(R.id.container, new UsuariosFragment(usuariosArrayList)).commit();
-                                break;
-                            case R.id.navigation_add:
-//                                try {
-//                                    includesForUploadFiles();
-//                                } catch (FileNotFoundException e) {
-//                                    e.printStackTrace();
-//                                }
-                                break;
-                            case R.id.navigation_message:
-                                break;
-                            case R.id.navigation_search:
-                                break;
+                nav.setOnNavigationItemSelectedListener(this);
+                if (i.getStringExtra("tipo").equals("registro"))
+                    registerUser(i.getStringExtra("email"), i.getStringExtra("name"), i.getStringExtra("tlf"));
 
-                            case R.id.navigation_user:
-                                getSupportFragmentManager().beginTransaction().replace(R.id.container, new ConfigFragment()).commit();
-                                break;
-                        }
-                        return true;
-                    }
-                });
+
+
+
         }
+    }
+
+    public void mostrarMensajes(){
+        ListView listOfMessages = findViewById(R.id.list_of_messages);
+        FirebaseListOptions<MensajesChat> options = new FirebaseListOptions.Builder<MensajesChat>()
+                .setLayout(R.layout.mensajes)//Note: The guide doesn't mention this method, without it an exception is thrown that the layout has to be set.
+                .setQuery(FirebaseDatabase.getInstance().getReference(), MensajesChat.class)
+                .build();
+        adapter = new FirebaseListAdapter<MensajesChat>(options) {
+            @Override
+            protected void populateView(View v, MensajesChat model, int position) {
+                // Get references to the views of message.xml
+                TextView messageText = (TextView)v.findViewById(R.id.message_text);
+                TextView messageUser = (TextView)v.findViewById(R.id.message_user);
+                TextView messageTime = (TextView)v.findViewById(R.id.message_time);
+
+                // Set their text
+                messageText.setText(model.getMensajesTexto());
+                messageUser.setText(model.getMensajesUsuario());
+
+                // Format the date before showing it
+                messageTime.setText(DateFormat.format("dd-MM-yyyy (HH:mm:ss)",
+                        model.getMensajesTiempo()));
+            }
+        };
+        listOfMessages.setAdapter(adapter);
+    }
+
+    public void enviarMensaje(){
+        EditText input = (EditText)findViewById(R.id.input);
+        FirebaseDatabase.getInstance()
+                .getReference().child("chat")
+                .push()
+                .setValue(new MensajesChat(input.getText().toString(),
+                        mFirebaseUser.getDisplayName())
+                );
+
+        // Clear the input
+        input.setText("");
     }
 
     private void loadLogInView() {
@@ -106,63 +134,19 @@ public class MainActivity extends AppCompatActivity implements OnAveriaInteracti
         FirebaseDatabase database = FirebaseDatabase.getInstance();
         DatabaseReference myRef = database.getReference();
         List rating = new ArrayList<String>();
-        rating.add("3.2");
-        rating.add("4.2");
-        rating.add("2.2");
-        myRef.child("users").child(mFirebaseUser.getUid()).setValue(new Usuarios(mFirebaseUser.getUid(), name, name, email, new Direccion("fake adress", "36", "Talavera",
-                "45600", new Geo("-37.3159", "81.1496")), tlf, "proveedor", new Rating(rating)));
+        rating.add("");
+        myRef.child("users").child(mFirebaseUser.getUid()).setValue(new Usuarios(mFirebaseUser.getUid(), name, name, email, new Direccion("", "", "",
+                "", new Geo("", "")), tlf, "", new Rating(rating)));
     }
 
-    public void leerUsuarios() {
-        final FirebaseDatabase database = FirebaseDatabase.getInstance();
-        DatabaseReference myRef = database.getReference().child("users");
-        myRef.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                usuariosArrayList = new ArrayList<>();
-                for (DataSnapshot child: dataSnapshot.getChildren()) {
-                    Usuarios usu = cargarUsuario(child);
-                    usuariosArrayList.add(usu);
-                }
-                for (Usuarios usu:
-                     usuariosArrayList) {
-                    Log.i("ERRORLEER", "onDataChange: " + usu.getId());
-                }
-                getSupportFragmentManager().beginTransaction().add(R.id.container, new UsuariosFragment(usuariosArrayList)).commit();
-            }
 
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-            }
-        });
-    }
 
     @Override
     public void onAveriaClick(Usuarios usuarios) {
         Toast.makeText(this, "He pulsado a: " + usuarios.getNombre(), Toast.LENGTH_SHORT).show();
     }
 
-    public Usuarios cargarUsuario(DataSnapshot dataSnapshot){
-        String id = (String) dataSnapshot.child("id").getValue();
-        String nombre= (String) dataSnapshot.child("nombre").getValue();
-        String usuario= (String) dataSnapshot.child("usuario").getValue();
-        String email= (String) dataSnapshot.child("email").getValue();
-        String tlf = (String) dataSnapshot.child("tlf").getValue();
-        String tipo = (String) dataSnapshot.child("tipo").getValue();
 
-        String calle = (String) dataSnapshot.child("direcc").child("calle").getValue();
-        String numero = (String) dataSnapshot.child("direcc").child("numero").getValue();
-        String ciudad = (String) dataSnapshot.child("direcc").child("ciudad").getValue();
-        String cp = (String) dataSnapshot.child("direcc").child("cp").getValue();
-        Geo geo = new Geo((String) dataSnapshot.child("direcc").child("geo").child("lat").getValue(), (String) dataSnapshot.child("direcc").child("geo").child("lng").getValue());
-        Direccion direcc = new Direccion(calle, numero, ciudad, cp, geo);
-
-        List notas = (List) dataSnapshot.child("ratings").child("notas").getValue();
-        Rating rating = new Rating(notas);
-
-        Usuarios usu = new Usuarios(id, nombre, usuario, email, direcc, tlf, tipo, rating);
-        return usu;
-    }
 
     public void includesForUploadFiles() throws FileNotFoundException {
         FirebaseStorage storage = FirebaseStorage.getInstance();
@@ -189,5 +173,51 @@ public class MainActivity extends AppCompatActivity implements OnAveriaInteracti
             }
         });
         // [END upload_memory]}
+    }
+
+    @Override
+    public void onClick(View v) {
+        if (v == findViewById(R.id.fotoPerfil)){
+            Toast.makeText(this, "Foto", Toast.LENGTH_SHORT).show();
+        }
+
+        if (v == findViewById(R.id.cirInfPersButton)){
+            Toast.makeText(this, "Boton info", Toast.LENGTH_SHORT).show();
+        }
+
+        if (v == findViewById(R.id.cirTlfButton)){
+            Toast.makeText(this, "Boton tlf", Toast.LENGTH_SHORT).show();
+        }
+
+        if (v == findViewById(R.id.cirEmailButton)){
+            Toast.makeText(this, "Boton email", Toast.LENGTH_SHORT).show();
+        }
+
+        if (v == findViewById(R.id.fab)){
+            Toast.makeText(this, "Boton enviar", Toast.LENGTH_SHORT).show();
+            enviarMensaje();
+        }
+            
+    }
+
+    @Override
+    public boolean onNavigationItemSelected(@NonNull MenuItem menuItem) {
+        switch (menuItem.getItemId()) {
+            case R.id.navigation_home:
+                carga.reemmplazaUsuarios();
+                break;
+            case R.id.navigation_add:
+                break;
+            case R.id.navigation_message:
+                //mostrarMensajes();
+                getSupportFragmentManager().beginTransaction().replace(R.id.container, new MensajesFragment()).commit();
+                break;
+            case R.id.navigation_search:
+                break;
+            case R.id.navigation_user:
+                getSupportFragmentManager().beginTransaction().replace(R.id.container, new ConfigFragment()).commit();
+                break;
+        }
+        return true;
     }
 }
