@@ -1,45 +1,38 @@
 package es.alejandrogarrido.homing;
 
+import com.google.firebase.database.Exclude;
+import com.google.firebase.database.ServerValue;
+
 import java.util.Date;
 
 public class MensajesChat {
 
-    private String mensajesTexto;
-    private String mensajesUsuario;
-    private long mensajesTiempo;
+    public String chatId = "";
+    public String mensajeId= "";
+    public String emisorId= "";
+    public String mensaje= "";
+    public String mensajeTipo= "";
+    public String mediaUrl= "";
+    public String mediaThumbUrl= "";
+    public long timestamp;
 
 
-    public MensajesChat(String mensajesTexto, String mensajesUsuario) {
-        this.mensajesTexto = mensajesTexto;
-        this.mensajesUsuario = mensajesUsuario;
-        // Inicializamos el tiempo
-        mensajesTiempo = new Date().getTime();
-    }
+
+    @Exclude
+    public String localMediaUrl = "";
+
+    @Exclude
+    public int id = 0;
+
+    @Exclude
+    public long blockTime = 0;
+
+    public java.util.Map<String, String>getTimestamp(){return ServerValue.TIMESTAMP;}
+    public void setTimestamp(long timestamp){this.timestamp=timestamp;}
+
+    @Exclude
+    public long getTimestampLong(){return timestamp;}
 
     public MensajesChat() {
-    }
-
-    public String getMensajesTexto() {
-        return mensajesTexto;
-    }
-
-    public void setMensajesTexto(String mensajesTexto) {
-        this.mensajesTexto = mensajesTexto;
-    }
-
-    public String getMensajesUsuario() {
-        return mensajesUsuario;
-    }
-
-    public void setMensajesUsuario(String mensajesUsuario) {
-        this.mensajesUsuario = mensajesUsuario;
-    }
-
-    public long getMensajesTiempo() {
-        return mensajesTiempo;
-    }
-
-    public void setMensajesTiempo(long mensajesTiempo) {
-        this.mensajesTiempo = mensajesTiempo;
     }
 }

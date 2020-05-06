@@ -11,6 +11,9 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+
 import java.util.List;
 
 import es.alejandrogarrido.homing.ui.AdaptadorUsuarios.MyAveriaRecyclerViewAdapter;
@@ -30,6 +33,8 @@ public class UsuariosFragment extends Fragment {
     public UsuariosFragment(List<Usuarios> usuariosList) {
         this.usuariosList = usuariosList;
     }
+
+
 
     public UsuariosFragment(Usuarios usu) {
         this.usu = usu;
